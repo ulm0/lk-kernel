@@ -1,7 +1,7 @@
 # Kernels for natkit, yagan and limakit (flavors/<flavor>), version in VERSION.
 #   kernel    one job per flavor and architecture: <flavor>:<version>-<hash>-<arch>, rebuilt only when build.sh or
 #             the flavor's configs change (the hash); a fork's PR builds without pushing
-#   manifest  main: <flavor>:<version>-<hash> and <flavor>:<version>, multi-arch where the flavor is
+#   manifest  main: <flavor>:<version>-<hash> and <flavor>:<version>, multi-arch (arm64 + amd64)
 # Consumers pin <flavor>:<version>@sha256:<digest>, so a new build reaches them only through their own (Renovate) PR.
 name: build
 
@@ -38,7 +38,9 @@ jobs:
           - { flavor: natkit, arch: arm64, runner: ubuntu-26.04-arm }
           - { flavor: natkit, arch: amd64, runner: ubuntu-26.04 }
           - { flavor: yagan, arch: arm64, runner: ubuntu-26.04-arm }
+          - { flavor: yagan, arch: amd64, runner: ubuntu-26.04 }
           - { flavor: limakit, arch: arm64, runner: ubuntu-26.04-arm }
+          - { flavor: limakit, arch: amd64, runner: ubuntu-26.04 }
     name: kernel (${{ matrix.flavor }}, ${{ matrix.arch }})
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 120
@@ -87,8 +89,8 @@ jobs:
       matrix:
         include:
           - { flavor: natkit, arches: arm64 amd64 }
-          - { flavor: yagan, arches: arm64 }
-          - { flavor: limakit, arches: arm64 }
+          - { flavor: yagan, arches: arm64 amd64 }
+          - { flavor: limakit, arches: arm64 amd64 }
     name: manifest (${{ matrix.flavor }})
     runs-on: ubuntu-26.04-arm
     timeout-minutes: 5

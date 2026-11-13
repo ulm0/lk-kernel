@@ -6,8 +6,8 @@ kernel packaging but with a config written from `allnoconfig` up instead of Linu
 | Flavor | Used by | Architectures |
 |---|---|---|
 | `natkit` | [natkit](https://github.com/ulm0/natkit): NAT instance AMI (EC2) | arm64, amd64 |
-| `yagan` | [yagan](https://github.com/ulm0/yagan): k3s AMI (EC2 Graviton) | arm64 |
-| `limakit` | [limakit](https://github.com/ulm0/limakit): Lima VM image | arm64 |
+| `yagan` | [yagan](https://github.com/ulm0/yagan): k3s AMI (EC2) | arm64, amd64 (not boot-tested yet) |
+| `limakit` | [limakit](https://github.com/ulm0/limakit): Lima VM image | arm64, amd64 (not boot-tested yet) |
 
 ## Images
 
@@ -34,8 +34,8 @@ off (or takes its Kconfig default if it only becomes visible through a listed op
 doesn't end up in the final config as written (an unmet dependency would otherwise drop it silently). Put comments
 on their own lines: a trailing one would be read into the value.
 
-A new flavor: add its directory, then a `kernel` matrix entry per architecture and a `manifest` entry in
-`.github/workflows/build.yml`.
+Every flavor builds for arm64 and amd64. A new flavor: add its directory, then two `kernel` matrix entries and a
+`manifest` entry in `.github/workflows/build.yml`.
 
 ## Building
 
