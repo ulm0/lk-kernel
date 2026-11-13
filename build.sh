@@ -1,9 +1,9 @@
 #!/bin/sh
-# Build linuxkit/kernel:<version>-<flavor> for the docker daemon's architecture from LinuxKit's kernel packaging and
-# flavors/<flavor>/<flavor>.config (+ <flavor>-<uname -m>.config if present): a complete option list over allnoconfig;
-# LinuxKit's own config is not used. The resolved config is left in flavors/<flavor>/config-<uname -m>.
+# Build linuxkit/kernel:<version>-lk for the docker daemon's architecture from LinuxKit's kernel packaging and
+# config/lk.config + config/lk-<uname -m>.config: a complete option list over allnoconfig; LinuxKit's own config is
+# not used. The resolved config is left in config/config-<uname -m>.
 #
-#   ./build.sh <flavor> [KERNEL_VERSION]        e.g. ./build.sh natkit; the version defaults to the VERSION file
+#   ./build.sh [KERNEL_VERSION]        the version defaults to the VERSION file
 #
 # A version whose series LinuxKit doesn't package yet borrows the newest series' packaging (Dockerfile,
 # build-args); olddefconfig gives new options their defaults. Review the resolved config after that.
@@ -11,10 +11,8 @@
 set -eu
 
 DIR=$(cd "$(dirname "$0")" && pwd)
-FLAVOR=${1:?usage: build.sh <flavor> [KERNEL_VERSION]}
-F=$DIR/flavors/$FLAVOR
-[ -f "$F/$FLAVOR.config" ] || { echo "no flavors/$FLAVOR/$FLAVOR.config" >&2; exit 1; }
-KERNEL_VERSION=${2:-$(cat "$DIR/VERSION")}
+F=$DIR/config
+KERNEL_VERSION=${1:-$(cat "$DIR/VERSION")}
 LINUXKIT_REF=${LINUXKIT_REF:-f3906d1f6650f79d74adf3cba42b04ca9e21ea7d} # linuxkit/linuxkit master, 2026-10-15
 LINUXKIT=$(cd "$(dirname "${LINUXKIT:-bin/linuxkit}")" && pwd)/$(basename "${LINUXKIT:-bin/linuxkit}")
 SERIES=$(echo "$KERNEL_VERSION" | cut -d. -f1-2).x
@@ -43,7 +41,7 @@ fi
 sed -i.bak -e "s/^KERNEL_VERSION=.*/KERNEL_VERSION=$KERNEL_VERSION/" -e "s/^KERNEL_SERIES=.*/KERNEL_SERIES=$SERIES/" "$K/$SERIES/build-args"
 rm -f "$K/$SERIES/build-args.bak"
 
-# 3. allnoconfig + the flavor's config(s), normalized with olddefconfig (LinuxKit's build rejects a config that
+# 3. allnoconfig + lk.config + lk-<arch>.config, normalized with olddefconfig (LinuxKit's build rejects a config that
 #    isn't), in LinuxKit's own builder image: the config records the compiler and pahole versions
 BUILD_IMAGE=$(sed -n 's/^BUILD_IMAGE=//p' "$K/$SERIES/build-args")
 # BTF (CONFIG_DEBUG_INFO_BTF, e.g. Cilium's) needs pahole, and python3 for resolve_btfids' libbpf headers; neither
@@ -52,14 +50,12 @@ PAHOLE='v=v$(cut -d. -f1,2 /etc/alpine-release) && apk add -q --repository https
 grep -q pahole "$K/common/Dockerfile" ||
 	awk -v run="RUN $PAHOLE" '{print} /^    zlib-dev$/ && !done {print run; done=1}' "$K/common/Dockerfile" >"$K/common/Dockerfile.new" &&
 	mv "$K/common/Dockerfile.new" "$K/common/Dockerfile"
-ARCHCONF=
-[ ! -f "$F/$FLAVOR-$UNAME.config" ] || ARCHCONF=/f/$FLAVOR-$UNAME.config
 docker run --rm --platform "$PLATFORM" -v "$F:/f" "$BUILD_IMAGE" sh -euc "
 	apk add -q bash build-base bc bison flex perl linux-headers openssl-dev elfutils-dev curl xz >/dev/null
 	$PAHOLE >/dev/null
 	cd /tmp && curl -fsSL https://cdn.kernel.org/pub/linux/kernel/v${KERNEL_VERSION%%.*}.x/linux-$KERNEL_VERSION.tar.xz | tar xJ
 	cd linux-$KERNEL_VERSION && make ARCH=$KARCH allnoconfig >/dev/null
-	cat /f/$FLAVOR.config $ARCHCONF | grep '^CONFIG_' >/tmp/want
+	cat /f/lk.config /f/lk-$UNAME.config | grep '^CONFIG_' >/tmp/want
 	while IFS== read -r o v; do scripts/config --set-val \"\${o#CONFIG_}\" \"\$v\"; done </tmp/want
 	# plain make (the native ARCH: x86, not x86_64): LinuxKit's build diffs the config's header line too
 	make olddefconfig >/dev/null
@@ -76,6 +72,6 @@ cp "$F/config-$UNAME" "$K/$SERIES/config-$UNAME"
 
 # 4. build with LinuxKit's own kernel packaging (same as kernel/Makefile buildplainkernel-%)
 (cd "$K" && "$LINUXKIT" pkg build . --docker --force --force-dirty --platforms "$PLATFORM" \
-	--build-yml ./common/build-kernel.yml --hash "$FLAVOR" --tag "$KERNEL_VERSION-{{.Hash}}" \
+	--build-yml ./common/build-kernel.yml --hash lk --tag "$KERNEL_VERSION-{{.Hash}}" \
 	--build-arg-file "$SERIES/build-args" --progress plain)
-echo "built linuxkit/kernel:$KERNEL_VERSION-$FLAVOR ($PLATFORM)"
+echo "built linuxkit/kernel:$KERNEL_VERSION-lk ($PLATFORM)"

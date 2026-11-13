@@ -1,18 +1,17 @@
-# make <flavor>: ghcr.io/ulm0/lk-kernel/<flavor>:<VERSION>, built for the docker daemon's architecture (build.sh)
+# make: ghcr.io/ulm0/lk-kernel:<VERSION>, built for the docker daemon's architecture (build.sh)
 export DOCKER_HOST ?= $(shell docker context inspect --format "{{.Endpoints.docker.Host}}")
 # linuxkit master: no release since v1.8.2 (2025-09). Built from source; the ref is in the file name so
 # bumping it rebuilds.
 LINUXKIT_REF := 0e34a007431a3a3c19a03fc6bca00fba51774706 # 2026-10-27
 LK := bin/linuxkit-$(shell echo $(LINUXKIT_REF) | cut -c1-12)
 GOLANG := golang:1.25-alpine@sha256:1ae0735f00daffa3aaf1363a5184c0d2dc55c78e3db4ec70241cdac97bf84b59
-REGISTRY := ghcr.io/ulm0/lk-kernel
+IMAGE := ghcr.io/ulm0/lk-kernel
 VERSION := $(shell cat VERSION)
-FLAVORS := $(notdir $(wildcard flavors/*))
 
-.PHONY: $(FLAVORS) clean
-$(FLAVORS): | $(LK)
-	LINUXKIT=$(LK) ./build.sh $@ $(VERSION)
-	docker tag linuxkit/kernel:$(VERSION)-$@ $(REGISTRY)/$@:$(VERSION)
+.PHONY: kernel clean
+kernel: | $(LK)
+	LINUXKIT=$(LK) ./build.sh $(VERSION)
+	docker tag linuxkit/kernel:$(VERSION)-lk $(IMAGE):$(VERSION)
 
 $(LK):
 	mkdir -p bin
@@ -24,4 +23,4 @@ $(LK):
 	chmod +x $@.tmp && mv $@.tmp $@
 
 clean:
-	rm -rf bin .build flavors/*/config-*
+	rm -rf bin .build config/config-*
