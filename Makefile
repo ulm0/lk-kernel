@@ -4,7 +4,7 @@ export DOCKER_HOST ?= $(shell docker context inspect --format "{{.Endpoints.dock
 # bumping it rebuilds.
 LINUXKIT_REF := 0e34a007431a3a3c19a03fc6bca00fba51774706 # 2026-10-27
 LK := bin/linuxkit-$(shell echo $(LINUXKIT_REF) | cut -c1-12)
-GOLANG := golang:1.25-alpine@sha256:1ae0735f00daffa3aaf1363a5184c0d2dc55c78e3db4ec70241cdac97bf84b59
+GOLANG := golang:1.27-alpine@sha256:eb61c3873c97416fff0116553fff65d67a3549f72e11d9758849a689cdd8b523
 IMAGE := ghcr.io/ulm0/lk-kernel
 VERSION := $(shell cat VERSION)
 
