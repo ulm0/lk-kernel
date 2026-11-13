@@ -29,5 +29,14 @@
       ],
       "datasourceTemplate": "docker"
     }
+  ],
+  "packageRules": [
+    {
+      "description": "the kernel stays on its LTS (longterm) series; a new series is a deliberate change (config review in every project, Jool support)",
+      "matchDepNames": [
+        "linux"
+      ],
+      "allowedVersions": "/^6\\.18\\./"
+    }
   ]
 }
