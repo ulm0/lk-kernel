@@ -1,7 +1,7 @@
 # lk-kernel
 
 One minimal [LinuxKit](https://github.com/linuxkit/linuxkit) kernel, arm64 and amd64, for
-[natkit](https://github.com/ulm0/natkit) (EC2 NAT instance), [yagan](https://github.com/ulm0/yagan) (EC2 k3s) and
+[natkit](https://github.com/ulm0/natkit) (EC2 NAT instance) and
 [limakit](https://github.com/ulm0/limakit) (Lima VM). Built with LinuxKit's own kernel packaging, but from a config
 written from `allnoconfig` up instead of LinuxKit's.
 
